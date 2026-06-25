@@ -8,7 +8,7 @@
         reverse_proxy annotate_api:8181
     }
 
-    handle /annotate/* {
+    handle /annotate* {
         uri strip_prefix /annotate
         reverse_proxy annotate_app:80
     }
