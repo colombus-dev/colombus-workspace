@@ -4,3 +4,6 @@
 [submodule "submodules/colombus"]
 	path = submodules/colombus
 	url = https://github.com/colombus-dev/colombus.git
+[submodule "submodules/mlprofiler"]
+	path = submodules/mlprofiler
+	url = https://github.com/colombus-dev/mlprofiler.git
