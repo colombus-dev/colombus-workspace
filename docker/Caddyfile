@@ -1,0 +1,31 @@
+{
+    email {$CADDY_EMAIL}
+}
+
+{$DOMAIN} {
+    handle /annotate/api/* {
+        uri strip_prefix /annotate
+        reverse_proxy annotate_api:8181
+    }
+
+    handle /annotate/* {
+        uri strip_prefix /annotate
+        reverse_proxy annotate_app:80
+    }
+
+    handle /api/* {
+        reverse_proxy colombus_app:8180
+    }
+
+    handle /health {
+        reverse_proxy colombus_app:8180
+    }
+
+    handle {
+        reverse_proxy colombus_ui:80
+    }
+
+    log {
+        output stdout
+    }
+}
