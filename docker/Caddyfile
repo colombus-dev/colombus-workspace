@@ -4,6 +4,7 @@
 
 {$DOMAIN} {
     redir /annotate /annotate/
+    redir /colombus /colombus/
 
     handle /annotate/api/* {
         uri strip_prefix /annotate
@@ -15,18 +16,15 @@
         reverse_proxy annotate_app:80
     }
 
-    handle /api/* {
+    handle /colombus/api/* {
+        uri strip_prefix /colombus
         reverse_proxy colombus_app:8180
     }
 
-    handle /health {
-        reverse_proxy colombus_app:8180
-    }
-
-    handle {
+    handle /colombus/* {
+        uri strip_prefix /colombus
         reverse_proxy colombus_ui:80
     }
-
     log {
         output stdout
     }
