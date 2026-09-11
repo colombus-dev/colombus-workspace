@@ -7,3 +7,6 @@
 [submodule "submodules/mlprofiler"]
 	path = submodules/mlprofiler
 	url = git@github.com:colombus-dev/mlprofiler.git
+[submodule "submodules/colombus-flink"]
+	path = submodules/colombus-flink
+	url = git@github.com:colombus-dev/colombus-flink.git
