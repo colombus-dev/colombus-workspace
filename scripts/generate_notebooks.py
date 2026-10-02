@@ -3,7 +3,6 @@ import argparse
 import json
 import pathlib
 import random
-import shutil
 
 VOCAB = [
     "Data Collection",
@@ -146,11 +145,13 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
     random.seed(args.seed)
 
-    if args.out_dir.exists() and any(args.out_dir.iterdir()):
-        if not args.reset:
+    if args.out_dir.exists():
+        if any(args.out_dir.iterdir()) and not args.reset:
             raise SystemExit(f"{args.out_dir} already has files in it, pass --reset")
-        shutil.rmtree(args.out_dir)
-    args.out_dir.mkdir(parents=True, exist_ok=True)
+        for child in args.out_dir.iterdir():
+            child.unlink()
+    else:
+        args.out_dir.mkdir(parents=True)
 
     manifest = generate(args.out_dir, args.num_notebooks, args.min_steps, args.max_steps)
     manifest_path = args.out_dir.parent / f"{args.out_dir.name}.manifest.json"

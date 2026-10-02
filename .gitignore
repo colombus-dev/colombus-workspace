@@ -2,3 +2,4 @@
 .idea
 .aleash*
 data/**
+__pycache__/
