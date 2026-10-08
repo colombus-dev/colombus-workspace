@@ -156,8 +156,9 @@ def main(argv: list[str] | None = None) -> None:
         files[case["name"]] = f
         writers[case["name"]] = csv.writer(f)
         header = ["num_notebooks"]
-        for approach in approaches:
-            header += [f"{approach}_median_ms", f"{approach}_p95_ms", f"{approach}_matches"]
+        header += [f"{approach}_median_ms" for approach in approaches]
+        header += [f"{approach}_matches" for approach in approaches]
+        header += [f"{approach}_p95_ms" for approach in approaches]
         writers[case["name"]].writerow(header)
 
     for num_notebooks in sizes:
@@ -169,17 +170,18 @@ def main(argv: list[str] | None = None) -> None:
             seed_flink()
 
         for case in CASES:
-            row = [num_notebooks]
+            results = {}
             summary_parts = []
             for approach in approaches:
-                result = QUERY_FUNCTIONS[approach](case, args.repeat)
+                results[approach] = QUERY_FUNCTIONS[approach](case, args.repeat)
+                summary_parts.append(
+                    f"{approach}={results[approach]['timing_ms']['median_ms']}ms"
+                )
 
-                row += [
-                    result["timing_ms"]["median_ms"],
-                    result["timing_ms"]["p95_ms"],
-                    result["match_occurrences"],
-                ]
-                summary_parts.append(f"{approach}={result['timing_ms']['median_ms']}ms")
+            row = [num_notebooks]
+            row += [results[a]["timing_ms"]["median_ms"] for a in approaches]
+            row += [results[a]["match_occurrences"] for a in approaches]
+            row += [results[a]["timing_ms"]["p95_ms"] for a in approaches]
 
             writers[case["name"]].writerow(row)
             files[case["name"]].flush()
