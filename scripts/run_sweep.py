@@ -195,7 +195,7 @@ def main(argv: list[str] | None = None) -> None:
                 row += [
                     result["timing_ms"]["median_ms"],
                     result["timing_ms"]["p95_ms"],
-                    len(result["matches"]),
+                    result["match_occurrences"],
                 ]
                 summary_parts.append(f"{approach}={result['timing_ms']['median_ms']}ms")
 
