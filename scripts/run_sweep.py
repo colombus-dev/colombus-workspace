@@ -102,7 +102,7 @@ def seed_colombus() -> None:
 def query_colombus(case: dict, repeat: int) -> dict:
     out = run(
         ["uv", "run", "python", "scripts/benchmark/query.py",
-         *case["colombus_args"], "--repeat", str(repeat), "--mode", "profiles"],
+         *case["colombus_args"], "--repeat", str(repeat), "--mode", "sequences"],
         cwd=COLOMBUS_DIR, capture=True,
     )
     return json.loads(out)
