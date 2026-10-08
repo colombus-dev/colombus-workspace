@@ -1,6 +1,7 @@
 #!/usr/bin/env -S uv run python
 import argparse
 import csv
+import datetime
 import json
 import pathlib
 import subprocess
@@ -9,7 +10,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 COLOMBUS_DIR = ROOT / "submodules" / "colombus"
 FLINK_DIR = ROOT / "submodules" / "colombus-flink"
-BENCHMARKS_DIR = ROOT / "data" / "benchmarks"
+BENCHMARKS_DIR = ROOT / "data" / f"benchmark-{datetime.datetime.now():%Y%m%d-%H%M%S}"
 
 TOKEN_DELIMITER = "\x1f"
 
@@ -47,23 +48,11 @@ CASES = [
         "name": "gap",
         "colombus_args": [
             "--regex",
-            f"{TOKEN_DELIMITER}Data Modeling(?={TOKEN_DELIMITER}).*"
+            f"{TOKEN_DELIMITER}Data Modeling(?={TOKEN_DELIMITER}).*?"
             f"{TOKEN_DELIMITER}Model Deployment(?={TOKEN_DELIMITER})",
         ],
         "flink_pattern_define": ("A X*? B", "A=Data Modeling,X=*,B=Model Deployment"),
         "dsl_steps": ["Data Modeling", "*", "Model Deployment"],
-    },
-    {
-        "name": "quantifier",
-        "colombus_args": [
-            "--regex",
-            f"({TOKEN_DELIMITER}Data Preparation){{2,3}}{TOKEN_DELIMITER}Data Modeling"
-            f"(?={TOKEN_DELIMITER})",
-        ],
-        "flink_pattern_define": ("A{2,3} B", "A=Data Preparation,B=Data Modeling"),
-        # PatternGroup.multiplicity is typed Literal["*", "+", "1"]
-        # so i don't think it's possible to express other quantifiers.
-        "dsl_steps": None,
     },
     {
         "name": "long_chain",
@@ -108,9 +97,7 @@ def query_colombus(case: dict, repeat: int) -> dict:
     return json.loads(out)
 
 
-def query_dsl(case: dict, repeat: int) -> dict | None:
-    if case["dsl_steps"] is None:
-        return None
+def query_dsl(case: dict, repeat: int) -> dict:
     out = run(
         ["uv", "run", "python", "scripts/benchmark/query_dsl.py",
          "--steps", *case["dsl_steps"], "--repeat", str(repeat)],
@@ -186,11 +173,6 @@ def main(argv: list[str] | None = None) -> None:
             summary_parts = []
             for approach in approaches:
                 result = QUERY_FUNCTIONS[approach](case, args.repeat)
-
-                if result is None:
-                    # case isn't expressible through this approach
-                    row += ["-1", "-1", "-1"]
-                    continue
 
                 row += [
                     result["timing_ms"]["median_ms"],
