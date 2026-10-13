@@ -129,6 +129,14 @@ QUERY_FUNCTIONS = {
 }
 
 
+TIMED_OUT_RESULT = {
+    "matches": [],
+    "match_occurrences": -1,
+    "timing_ms": {"median_ms": -1, "p95_ms": -1},
+    "timed_out": True,
+}
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sizes", nargs="+", type=int, default=[100, 500, 1000, 5000])
@@ -161,6 +169,8 @@ def main(argv: list[str] | None = None) -> None:
         header += [f"{approach}_p95_ms" for approach in approaches]
         writers[case["name"]].writerow(header)
 
+    timed_out_pairs: set[tuple[str, str]] = set()
+
     for num_notebooks in sizes:
         print(f"=== num_notebooks={num_notebooks} ===")
         regenerate_notebooks(num_notebooks)
@@ -173,7 +183,13 @@ def main(argv: list[str] | None = None) -> None:
             results = {}
             summary_parts = []
             for approach in approaches:
-                results[approach] = QUERY_FUNCTIONS[approach](case, args.repeat)
+                key = (case["name"], approach)
+                if key in timed_out_pairs:
+                    results[approach] = TIMED_OUT_RESULT
+                else:
+                    results[approach] = QUERY_FUNCTIONS[approach](case, args.repeat)
+                    if results[approach].get("timed_out"):
+                        timed_out_pairs.add(key)
                 summary_parts.append(
                     f"{approach}={results[approach]['timing_ms']['median_ms']}ms"
                 )
