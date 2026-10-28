@@ -37,8 +37,8 @@ up:
 ifeq ($(ENV),dev)
 	$(COMPOSE) up -d --build $(SERVICES)
 else
-	$(COMPOSE) pull --ignore-buildable $(SERVICES) caddy
-	$(COMPOSE) up -d $(SERVICES) caddy
+	$(COMPOSE) pull --ignore-buildable $(SERVICES) caddy watchtower
+	$(COMPOSE) up -d $(SERVICES) caddy watchtower
 endif
 
 down:
