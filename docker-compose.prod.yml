@@ -1,3 +1,13 @@
+name: colombus-prod
+
+include:
+  - path: submodules/colombus/docker-compose.prod.yml
+    env_file: submodules/colombus/.env
+  - path: submodules/annotation/docker-compose.prod.yml
+    env_file: submodules/annotation/.env
+  - path: submodules/mlprofiler/docker/docker-compose.prod.yml
+    env_file: submodules/mlprofiler/docker/.env
+
 services:
   caddy:
     image: caddy:2-alpine

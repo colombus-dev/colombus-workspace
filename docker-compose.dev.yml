@@ -1,0 +1,9 @@
+name: colombus-dev
+
+include:
+  - path: submodules/colombus/docker-compose.dev.yml
+    env_file: submodules/colombus/.env
+  - path: submodules/annotation/docker-compose.dev.yml
+    env_file: submodules/annotation/.env
+  - path: submodules/mlprofiler/docker/docker-compose.yml
+    env_file: submodules/mlprofiler/docker/.env
