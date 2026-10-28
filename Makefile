@@ -1,7 +1,7 @@
 ENV ?= dev
 APPS ?= colombus annotation mlprofiler
 
-KNOWN_APPS := colombus annotation mlprofiler caddy
+KNOWN_APPS := colombus annotation mlprofiler caddy watchtower
 
 NETWORK_dev  := colombus-dev_network
 NETWORK_prod := colombus-net
@@ -13,6 +13,7 @@ SERVICES_colombus   := colombus_ui colombus_app colombus_postgresql
 SERVICES_annotation := annotate_app annotate_api annotate_redis
 SERVICES_mlprofiler := mlprofiler_api vespucci_parser_api
 SERVICES_caddy      := caddy
+SERVICES_watchtower := watchtower
 
 UNKNOWN_APPS := $(filter-out $(KNOWN_APPS),$(APPS))
 ifneq ($(UNKNOWN_APPS),)
