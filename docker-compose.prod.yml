@@ -25,15 +25,16 @@ services:
     networks:
       - colombus-net
 
-  watchtower:
-    image: containrrr/watchtower:latest
+  wud:
+    image: getwud/wud:latest
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:3080:3000"
     environment:
-      WATCHTOWER_LABEL_ENABLE: "true"
-      WATCHTOWER_POLL_INTERVAL: "300"
-      WATCHTOWER_CLEANUP: "true"
+      WUD_TRIGGER_DOCKER_AUTO_PRUNE: "true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - wud_data:/store
 
 networks:
   colombus-net:
@@ -43,3 +44,4 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  wud_data:

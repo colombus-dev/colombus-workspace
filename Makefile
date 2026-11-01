@@ -1,7 +1,7 @@
 ENV ?= dev
 APPS ?= colombus annotation mlprofiler
 
-KNOWN_APPS := colombus annotation mlprofiler caddy watchtower
+KNOWN_APPS := colombus annotation mlprofiler caddy wud
 
 NETWORK_dev  := colombus-dev_network
 NETWORK_prod := colombus-net
@@ -13,7 +13,7 @@ SERVICES_colombus   := colombus_ui colombus_app colombus_postgresql
 SERVICES_annotation := annotate_app annotate_api annotate_redis
 SERVICES_mlprofiler := mlprofiler_api vespucci_parser_api
 SERVICES_caddy      := caddy
-SERVICES_watchtower := watchtower
+SERVICES_wud        := wud
 
 UNKNOWN_APPS := $(filter-out $(KNOWN_APPS),$(APPS))
 ifneq ($(UNKNOWN_APPS),)
@@ -38,8 +38,8 @@ up:
 ifeq ($(ENV),dev)
 	$(COMPOSE) up -d --build $(SERVICES)
 else
-	$(COMPOSE) pull --ignore-buildable $(SERVICES) caddy watchtower
-	$(COMPOSE) up -d $(SERVICES) caddy watchtower
+	$(COMPOSE) pull --ignore-buildable $(SERVICES) caddy wud
+	$(COMPOSE) up -d $(SERVICES) caddy wud
 endif
 
 down:

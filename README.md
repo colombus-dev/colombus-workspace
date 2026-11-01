@@ -39,4 +39,6 @@ make logs   # follow logs across all services
 make down   # stop everything
 ```
 
-For prod, add `ENV=prod` to any command. To target specific apps instead of all of them, add `APPS="colombus annotation"` (any subset of `colombus`, `annotation`, `mlprofiler`). Watchtower auto-deploys new releases; `make up ENV=prod` is only needed for the initial setup.
+Notes :
+- In production add `ENV=prod` to any command
+- You can target specific apps using `APPS="colombus annotation"`
