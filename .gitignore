@@ -1,5 +1,9 @@
 .env
 .idea
 .aleash*
+.pnp.cjs
+.yarn*
 data/**
 __pycache__/
+package.json
+yarn.lock
