@@ -9,15 +9,14 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 COLOMBUS_DIR = ROOT / "submodules" / "colombus"
-FLINK_DIR = ROOT / "submodules" / "colombus-flink"
 BENCHMARKS_DIR = ROOT / "data" / f"benchmark-{datetime.datetime.now():%Y%m%d-%H%M%S}"
 
 TOKEN_DELIMITER = "\x1f"
 
-POSTGRES = "postgres"
+REGEX = "regex"
 FLINK = "flink"
-DSL = "dsl"
-APPROACHES = [POSTGRES, FLINK, DSL]
+MULTIJOIN = "multijoin"
+APPROACHES = [REGEX, FLINK, MULTIJOIN]
 
 
 def flat_steps(terms: list[str]) -> list[str]:
@@ -40,45 +39,47 @@ LONG_CHAIN_TERMS = [
 CASES = [
     {
         "name": "short_adjacent",
-        "colombus_args": flat_steps(["Data Modeling", "Model Deployment"]),
+        "regex_args": flat_steps(["Data Modeling", "Model Deployment"]),
         "flink_pattern_define": flat_pattern_define(["Data Modeling", "Model Deployment"]),
-        "dsl_steps": ["Data Modeling", "Model Deployment"],
+        "multijoin_steps": ["Data Modeling", "Model Deployment"],
     },
     {
         "name": "gap",
-        "colombus_args": [
+        "regex_args": [
             "--regex",
             f"{TOKEN_DELIMITER}Data Modeling(?={TOKEN_DELIMITER}).*?"
             f"{TOKEN_DELIMITER}Model Deployment(?={TOKEN_DELIMITER})",
         ],
         "flink_pattern_define": ("A X*? B", "A=Data Modeling,X=*,B=Model Deployment"),
-        "dsl_steps": ["Data Modeling", "*", "Model Deployment"],
+        "multijoin_steps": ["Data Modeling", "*", "Model Deployment"],
     },
     {
         "name": "long_chain",
-        "colombus_args": flat_steps(LONG_CHAIN_TERMS),
+        "regex_args": flat_steps(LONG_CHAIN_TERMS),
         "flink_pattern_define": flat_pattern_define(LONG_CHAIN_TERMS),
-        "dsl_steps": LONG_CHAIN_TERMS,
+        "multijoin_steps": LONG_CHAIN_TERMS,
     },
     {
         "name": "no_match",
-        "colombus_args": flat_steps(["Save Results"] * 6),
+        "regex_args": flat_steps(["Save Results"] * 6),
         "flink_pattern_define": flat_pattern_define(["Save Results"] * 6),
-        "dsl_steps": ["Save Results"] * 6,
+        "multijoin_steps": ["Save Results"] * 6,
     },
 ]
 
 
 def run(cmd: list[str], cwd: pathlib.Path, capture: bool = False) -> str:
-    result = subprocess.run(
-        cmd, cwd=cwd, check=True, capture_output=capture, text=True
-    )
+    result = subprocess.run(cmd, cwd=cwd, capture_output=capture, text=True)
+    if result.returncode != 0:
+        if capture:
+            sys.stderr.write(result.stderr)
+        raise subprocess.CalledProcessError(result.returncode, cmd)
     return result.stdout if capture else ""
 
 
 def regenerate_notebooks(num_notebooks: int) -> None:
     run(
-        [sys.executable, str(ROOT / "scripts" / "generate_notebooks.py"),
+        [sys.executable, str(ROOT / "scripts" / "bench-generate.py"),
          "--num-notebooks", str(num_notebooks), "--reset"],
         cwd=ROOT,
     )
@@ -88,44 +89,40 @@ def seed_colombus() -> None:
     run(["uv", "run", "python", "scripts/benchmark/seed.py", "--reset"], cwd=COLOMBUS_DIR)
 
 
-def query_colombus(case: dict, repeat: int) -> dict:
+def query_regex(case: dict, repeat: int) -> dict:
     out = run(
         ["uv", "run", "python", "scripts/benchmark/query.py",
-         *case["colombus_args"], "--repeat", str(repeat), "--mode", "sequences"],
+         *case["regex_args"], "--repeat", str(repeat), "--mode", "sequences"],
         cwd=COLOMBUS_DIR, capture=True,
     )
     return json.loads(out)
 
 
-def query_dsl(case: dict, repeat: int) -> dict:
+def query_multijoin(case: dict, repeat: int) -> dict:
     out = run(
         ["uv", "run", "python", "scripts/benchmark/query_dsl.py",
-         "--steps", *case["dsl_steps"], "--repeat", str(repeat)],
+         "--steps", *case["multijoin_steps"], "--repeat", str(repeat), "--quiet"],
         cwd=COLOMBUS_DIR, capture=True,
     )
     return json.loads(out)
-
-
-def seed_flink() -> None:
-    run(["docker", "compose", "exec", "-T", "pyflink", "python", "seed.py", "--truncate"],
-        cwd=FLINK_DIR)
 
 
 def query_flink(case: dict, repeat: int) -> dict:
     pattern, define = case["flink_pattern_define"]
     out = run(
-        ["docker", "compose", "exec", "-T", "pyflink", "python", "query.py",
+        ["docker", "compose", "-f", "docker-compose.dev.yml", "exec", "-T",
+         "pyflink", "python", "query.py",
          "--pattern", pattern, "--define", define,
          "--repeat", str(repeat), "--quiet"],
-        cwd=FLINK_DIR, capture=True,
+        cwd=ROOT, capture=True,
     )
     return json.loads(out)
 
 
 QUERY_FUNCTIONS = {
-    POSTGRES: query_colombus,
+    REGEX: query_regex,
     FLINK: query_flink,
-    DSL: query_dsl,
+    MULTIJOIN: query_multijoin,
 }
 
 
@@ -150,11 +147,7 @@ def main(argv: list[str] | None = None) -> None:
     sizes = args.sizes
     approaches = [a for a in APPROACHES if a in set(args.approaches)]
 
-    needs_colombus = POSTGRES in approaches or DSL in approaches
-    needs_flink = FLINK in approaches
-
-    if needs_flink:
-        run(["docker", "compose", "up", "-d", "--build", "pyflink"], cwd=FLINK_DIR)
+    needs_colombus = REGEX in approaches or MULTIJOIN in approaches
 
     BENCHMARKS_DIR.mkdir(parents=True, exist_ok=True)
     files = {}
@@ -176,8 +169,6 @@ def main(argv: list[str] | None = None) -> None:
         regenerate_notebooks(num_notebooks)
         if needs_colombus:
             seed_colombus()
-        if needs_flink:
-            seed_flink()
 
         for case in CASES:
             results = {}

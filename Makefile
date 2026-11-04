@@ -1,7 +1,8 @@
 ENV ?= dev
 APPS ?= colombus annotation mlprofiler
 
-KNOWN_APPS := colombus annotation mlprofiler caddy wud
+KNOWN_APPS := colombus annotation mlprofiler colombus-flink caddy wud
+DEV_ONLY_APPS := colombus-flink
 
 NETWORK_dev  := colombus-dev_network
 NETWORK_prod := colombus-net
@@ -9,22 +10,31 @@ NETWORK      := $(NETWORK_$(ENV))
 
 COMPOSE := docker compose -f docker-compose.$(ENV).yml
 
-SERVICES_colombus   := colombus_ui colombus_app colombus_postgresql
-SERVICES_annotation := annotate_app annotate_api annotate_redis
-SERVICES_mlprofiler := mlprofiler_api vespucci_parser_api
-SERVICES_caddy      := caddy
-SERVICES_wud        := wud
+SERVICES_colombus       := colombus_ui colombus_app colombus_postgresql
+SERVICES_annotation     := annotate_app annotate_api annotate_redis
+SERVICES_mlprofiler     := mlprofiler_api vespucci_parser_api
+SERVICES_colombus-flink := pyflink
+SERVICES_caddy          := caddy
+SERVICES_wud            := wud
 
 UNKNOWN_APPS := $(filter-out $(KNOWN_APPS),$(APPS))
 ifneq ($(UNKNOWN_APPS),)
 $(error Unknown app(s) in APPS: $(UNKNOWN_APPS) -- known apps are: $(KNOWN_APPS))
 endif
 
+ifeq ($(ENV),prod)
+INVALID_PROD_APPS := $(filter $(DEV_ONLY_APPS),$(APPS))
+ifneq ($(INVALID_PROD_APPS),)
+$(error $(INVALID_PROD_APPS) only supported in dev for now)
+endif
+endif
+
 SERVICES := $(foreach app,$(APPS),$(SERVICES_$(app)))
 
 ENV_INIT_dev := submodules/colombus/.env:submodules/colombus/.env.sample.dev \
                 submodules/annotation/.env:submodules/annotation/.env.sample.dev \
-                submodules/mlprofiler/docker/.env:submodules/mlprofiler/docker/.env.sample
+                submodules/mlprofiler/docker/.env:submodules/mlprofiler/docker/.env.sample \
+                submodules/colombus-flink/.env:submodules/colombus-flink/.env.sample.dev
 
 ENV_INIT_prod := submodules/colombus/.env:submodules/colombus/.env.sample.prod \
                  submodules/annotation/.env:submodules/annotation/.env.sample.prod \
