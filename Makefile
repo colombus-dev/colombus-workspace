@@ -13,7 +13,7 @@ COMPOSE := docker compose -f docker-compose.$(ENV).yml
 SERVICES_colombus       := colombus_ui colombus_app colombus_postgresql
 SERVICES_annotation     := annotate_app annotate_api annotate_redis
 SERVICES_mlprofiler     := mlprofiler_api vespucci_parser_api
-SERVICES_colombus-flink := pyflink
+SERVICES_colombus-flink := pyflink flink_gateway
 SERVICES_caddy          := caddy
 SERVICES_wud            := wud
 
