@@ -111,7 +111,7 @@ def query_flink(case: dict, repeat: int) -> dict:
     pattern, define = case["flink_pattern_define"]
     out = run(
         ["docker", "compose", "-f", "docker-compose.dev.yml", "exec", "-T",
-         "pyflink", "python", "query.py",
+         "pyflink", "python", "scripts/query.py",
          "--pattern", pattern, "--define", define,
          "--repeat", str(repeat), "--quiet"],
         cwd=ROOT, capture=True,
@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> None:
     sizes = args.sizes
     approaches = [a for a in APPROACHES if a in set(args.approaches)]
 
-    needs_colombus = REGEX in approaches or MULTIJOIN in approaches
+    needs_seed_data = bool(approaches)
 
     BENCHMARKS_DIR.mkdir(parents=True, exist_ok=True)
     files = {}
@@ -167,7 +167,7 @@ def main(argv: list[str] | None = None) -> None:
     for num_notebooks in sizes:
         print(f"=== num_notebooks={num_notebooks} ===")
         regenerate_notebooks(num_notebooks)
-        if needs_colombus:
+        if needs_seed_data:
             seed_colombus()
 
         for case in CASES:
