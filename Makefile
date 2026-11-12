@@ -1,5 +1,6 @@
 ENV ?= dev
 APPS ?= colombus annotation mlprofiler
+BUILD ?= false
 
 KNOWN_APPS := colombus annotation mlprofiler colombus-flink caddy wud
 DEV_ONLY_APPS := colombus-flink
@@ -46,7 +47,7 @@ ENV_INIT_prod := submodules/colombus/.env:submodules/colombus/.env.sample.prod \
 up:
 	docker network inspect $(NETWORK) >/dev/null 2>&1 || docker network create $(NETWORK) >/dev/null 2>&1 || true
 ifeq ($(ENV),dev)
-	$(COMPOSE) up -d --build $(SERVICES)
+	$(COMPOSE) up -d $(if $(filter true,$(BUILD)),--build,) $(SERVICES)
 else
 	$(COMPOSE) pull --ignore-buildable $(SERVICES) caddy wud
 	$(COMPOSE) up -d $(SERVICES) caddy wud

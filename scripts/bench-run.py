@@ -179,7 +179,7 @@ def main(argv: list[str] | None = None) -> None:
                     results[approach] = TIMED_OUT_RESULT
                 else:
                     results[approach] = QUERY_FUNCTIONS[approach](case, args.repeat)
-                    if results[approach].get("timed_out"):
+                    if results[approach].get("timed_out") or results[approach].get("failed"):
                         timed_out_pairs.add(key)
                 summary_parts.append(
                     f"{approach}={results[approach]['timing_ms']['median_ms']}ms"
