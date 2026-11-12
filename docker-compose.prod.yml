@@ -7,6 +7,8 @@ include:
     env_file: submodules/annotation/.env
   - path: submodules/mlprofiler/docker/docker-compose.prod.yml
     env_file: submodules/mlprofiler/docker/.env
+  - path: submodules/colombus-flink/docker-compose.prod.yml
+    env_file: submodules/colombus-flink/.env
 
 services:
   caddy:

@@ -1,9 +1,9 @@
 ENV ?= dev
-APPS ?= colombus annotation mlprofiler
+APPS ?= colombus annotation mlprofiler colombus-flink
 BUILD ?= false
 
 KNOWN_APPS := colombus annotation mlprofiler colombus-flink caddy wud
-DEV_ONLY_APPS := colombus-flink
+DEV_ONLY_SERVICES := pyflink
 
 NETWORK_dev  := colombus-dev_network
 NETWORK_prod := colombus-net
@@ -23,14 +23,11 @@ ifneq ($(UNKNOWN_APPS),)
 $(error Unknown app(s) in APPS: $(UNKNOWN_APPS) -- known apps are: $(KNOWN_APPS))
 endif
 
-ifeq ($(ENV),prod)
-INVALID_PROD_APPS := $(filter $(DEV_ONLY_APPS),$(APPS))
-ifneq ($(INVALID_PROD_APPS),)
-$(error $(INVALID_PROD_APPS) only supported in dev for now)
-endif
-endif
-
 SERVICES := $(foreach app,$(APPS),$(SERVICES_$(app)))
+
+ifeq ($(ENV),prod)
+SERVICES := $(filter-out $(DEV_ONLY_SERVICES),$(SERVICES))
+endif
 
 ENV_INIT_dev := submodules/colombus/.env:submodules/colombus/.env.sample.dev \
                 submodules/annotation/.env:submodules/annotation/.env.sample.dev \
@@ -40,6 +37,7 @@ ENV_INIT_dev := submodules/colombus/.env:submodules/colombus/.env.sample.dev \
 ENV_INIT_prod := submodules/colombus/.env:submodules/colombus/.env.sample.prod \
                  submodules/annotation/.env:submodules/annotation/.env.sample.prod \
                  submodules/mlprofiler/docker/.env:submodules/mlprofiler/docker/.env.sample \
+                 submodules/colombus-flink/.env:submodules/colombus-flink/.env.sample.prod \
                  .env:.env.sample.prod
 
 .PHONY: up down logs ps env-init
